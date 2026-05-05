@@ -14,7 +14,7 @@ engine = create_engine(
 
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def Base(DeclarativeBase):
+class Base(DeclarativeBase):
     pass
 
 def get_db():
