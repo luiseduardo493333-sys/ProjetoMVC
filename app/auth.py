@@ -1,5 +1,5 @@
 # 1. Hash e verificação de senha com bcrpt
-#2. Gerção de token JWT
+# 2. Gerção de token JWT
 # 3. leitrua e validção do token vindo de cookie
 
 from datetime import datetime, timedelta, timezone
@@ -45,7 +45,7 @@ def decodificar_token(token: str):
     return payload
 
 # dependecias dp FastAPI
-def get_usuario_logado(request: Requests):
+def get_usuario_logado(request: requests):
 
     token = request.cookies.get("acess_token")
 
@@ -62,7 +62,7 @@ def get_usuario_logado(request: Requests):
 
         if email is None:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token inválido"
             )
         return payload
@@ -72,3 +72,10 @@ def get_usuario_logado(request: Requests):
             detail="Não autenticado"
 
         )
+    
+
+def usuario_opcional(request: Request):
+    try:
+        return get_usuario_logado(request)
+    except HTTPException:
+        return None
