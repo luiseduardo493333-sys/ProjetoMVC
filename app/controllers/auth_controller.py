@@ -12,11 +12,11 @@ router = APIRouter(prefix="/auth", tags=["Autentificação"])
 
 templastes = Jinja2Templates(directory="app/templates")
 
-@router.get("/cadrasto")
-def tela_cadrasto (request: Request):
+@router.get("/cadastro")
+def tela_cadastro (request: Request):
         return templastes.TemplateResponse(
                 request,
-                "auth/cadrasto.html",
+                "auth/cadastro.html",
                {"request": request}
         )
 
@@ -29,3 +29,29 @@ def tela_login (request: Request):
                 "auth/login.html",
                {"request": request}
         )
+
+# rota para criar um usuario no banco de daos
+@router.post("/cadastro")
+def fazer_cadastro(
+        request: Request,
+        nome: str = Form(...),
+        email: str = Form(...),
+        senha: str = Form(...),
+        db: Session = Depends(get_db)
+):
+        #verificar o email do usuario
+        user_existente = db.query(Usuario).filter_by(email=email).first()
+
+        if user_existente:
+                return templastes.TemplateResponse(
+                        request,
+                        "auth/cadastro.html",
+                        {"request": request,"erro": "Este e-mail já esta cadastrado"}
+                )
+        
+        #Cria o novo usuario
+        novo_usuario = Usuario(nome=nome, email=email, senha_hash=hash_senha(senha))
+        db.add(novo_usuario)
+        db.commit()
+
+        return RedirectResponse(url="/auth/login", status_code=302)
