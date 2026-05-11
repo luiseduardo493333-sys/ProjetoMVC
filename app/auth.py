@@ -5,7 +5,7 @@
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import requests, HTTPException, status
+from fastapi import requests, HTTPException, status, Request
 from dotenv import load_dotenv
 import os
 
@@ -74,7 +74,7 @@ def get_usuario_logado(request: requests):
         )
     
 
-def usuario_opcional(request: Request):
+def get_usuario_opcional(request: Request):
     try:
         return get_usuario_logado(request)
     except HTTPException:
