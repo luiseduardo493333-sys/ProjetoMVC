@@ -22,5 +22,5 @@ python -m alembic upgrade head
 
 # Rodar o código
 ```bash
-python -m uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload --port 5500
 ```
