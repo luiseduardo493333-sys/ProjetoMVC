@@ -10,11 +10,11 @@ from app.auth import hash_senha, verificar_senha, criar_toke
 
 router = APIRouter(prefix="/auth", tags=["Autentificação"])
 
-templastes = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/cadastro")
 def tela_cadastro (request: Request):
-        return templastes.TemplateResponse(
+        return templates.TemplateResponse(
                 request,
                 "auth/cadastro.html",
                {"request": request}
@@ -24,7 +24,7 @@ def tela_cadastro (request: Request):
 
 @router.get("/login")
 def tela_login (request: Request):
-        return templastes.TemplateResponse(
+        return templates.TemplateResponse(
                 request,
                 "auth/login.html",
                {"request": request}
@@ -43,7 +43,7 @@ def fazer_cadastro(
         user_existente = db.query(Usuario).filter_by(email=email).first()
 
         if user_existente:
-                return templastes.TemplateResponse(
+                return templates.TemplateResponse(
                         request,
                         "auth/cadastro.html",
                         {"request": request,"erro": "Este e-mail já esta cadastrado"}
@@ -55,3 +55,87 @@ def fazer_cadastro(
         db.commit()
 
         return RedirectResponse(url="/auth/login", status_code=302)
+
+
+@router.post("/login")
+def login(
+    request: Request,
+    email: str = Form(...),
+    senha: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Processa o login e define o cookie JWT.
+
+    Fluxo:
+    1. Busca o usuário pelo email
+    2. Verifica a senha com bcrypt
+    3. Gera o token JWT
+    4. Salva o token em um cookie HttpOnly
+    5. Redireciona para a página principal
+    """
+
+    # Busca o usuário no banco pelo email
+    usuario = db.query(Usuario).filter(
+        Usuario.email == email
+    ).first()
+
+    # Verifica usuário E senha em passos separados para evitar
+    # "timing attacks" (atacante deduz se o email existe pelo tempo de resposta)
+    senha_correta = (
+        usuario is not None and
+        verificar_senha(senha, usuario.senha_hash)
+    )
+
+    if not senha_correta:
+        return templates.TemplateResponse(
+              request,
+            "auth/login.html",
+            {
+                "request": request,
+                "erro": "E-mail ou senha incorretos."
+            },
+            status_code=401
+        )
+
+    if not usuario.ativo:
+        return templates.TemplateResponse(
+            "auth/login.html",
+            {
+                "request": request,
+                "erro": "Usuário inativo. Contate o administrador."
+            },
+            status_code=403
+        )
+
+    # Dados que ficarão no payload do JWT
+    # "sub" (subject) é a convenção JWT para identificar o usuário
+    token_data = {
+        "sub": usuario.email,
+        "nome": usuario.nome,
+        "role": usuario.role,
+        "id": usuario.id
+    }
+
+    token = criar_token(token_data)
+
+    # Cria a resposta de redirecionamento
+    response = RedirectResponse(url="/", status_code=302)
+
+    # Define o cookie com o token JWT
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,    # JavaScript NÃO pode ler este cookie (proteção XSS)
+        max_age=3600,     # expira em 1 hora (em segundos)
+        samesite="lax",   # proteção básica contra CSRF
+        # secure=True     # ativar em produção (exige HTTPS)
+    )
+
+    return response
+
+@router.get("/logout")
+def sair():
+        response = RedirectResponse(url="/auth/login", status_code=302)
+        response.delete_cookie("access_token")
+        return response

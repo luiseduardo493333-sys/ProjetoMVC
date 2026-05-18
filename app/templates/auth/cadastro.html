@@ -11,15 +11,18 @@
     <form action="/auth/cadastro" method="post">
         Nome: <input type="text" name="nome">
         <br>
-        E-mail: <input type="email" name="email">
+        E-mail: <input type="email" name="email" required>
         <br>
-        Senha: <input type="password" name="senha">
+        Senha: <input type="password" name="senha" >
         <br>
 
         {% if erro %}
             <p style="color: red;">{{ erro }}</p>
         {% endif %}
+
         <button type="submit">Cadastrar</button>
     </form>
+
+    <p>Já tem conta? <a href="/auth/login">Entrar</a></p>
 </body>
 </html>

@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>login</title>
+    <title>Login</title>
 </head>
 <body>
-    <h1>Entrar na conta</h1>
+    <h1>Entrar no sistema</h1>
+
+    {% if request.query_params.get("cadastro") == "ok" %}
+        <p style="color: green;">Cadastro realizado! Faça login.</p>
+    {% endif %}
 
     <form action="/auth/login" method="post">
-
-        E-mail: <input type="email" name="email">
+        E-mail: <input type="email" name="email" required>
         <br><br>
-        Senha: <input type="password" name="senha_hash">
+        Senha: <input type="password" name="senha" >
         <br><br>
 
         {% if erro %}
             <p style="color: red;">{{ erro }}</p>
         {% endif %}
-        <button type="submit">Entrar</button>
 
-        <p>Não tem conta<a href="/auth/cadrasto">Cadastra-se</a>/p>
+
+
+        <button type="submit">Entrar</button>
     </form>
+
+    <p>Não tem conta? <a href="/auth/cadastro">Cadastre-se</a></p>
 </body>
 </html>
